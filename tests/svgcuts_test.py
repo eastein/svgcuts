@@ -2,7 +2,7 @@ import math
 import svgcuts
 import unittest
 
-class PuzzleTests(unittest.TestCase) :
+class LineTests(unittest.TestCase) :
 	def test_linelen(self) :
 		p1 = svgcuts.Point(0,0)
 		p2 = svgcuts.Point(2,3)

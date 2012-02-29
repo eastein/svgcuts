@@ -23,6 +23,34 @@ class LineTests(unittest.TestCase) :
 		self.assertTrue(l2.intersects(l1))
 
 	"""
+	looks like:
+	|
+	|
+	"""
+	def test_aligned_vert_nonintersect(self) :
+		p1 = svgcuts.Point(0,0)
+		p2 = svgcuts.Point(0,1)
+		p3 = svgcuts.Point(0,2)
+		p4 = svgcuts.Point(0,3)
+		l1 = svgcuts.Line(p1,p2)
+		l2 = svgcuts.Line(p3,p4)
+		self.assertFalse(l1.intersects(l2))
+		self.assertFalse(l2.intersects(l1))
+
+	"""
+	looks like: --
+	"""
+	def test_aligned_hor_nonintersect(self) :
+		p1 = svgcuts.Point(0,0)
+		p2 = svgcuts.Point(1,0)
+		p3 = svgcuts.Point(2,0)
+		p4 = svgcuts.Point(3,0)
+		l1 = svgcuts.Line(p1,p2)
+		l2 = svgcuts.Line(p3,p4)
+		self.assertFalse(l1.intersects(l2))
+		self.assertFalse(l2.intersects(l1))
+
+	"""
 	looks like: +
 	"""
 	def test_crosses2(self) :

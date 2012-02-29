@@ -191,10 +191,8 @@ class Line(object) :
 			vert2 = True
 
 		if vert1 and vert2 :
-			# the only way is if they are at the same x position exactly
-			# FIXME float equality?
-			# FIXME if they don't overlap in y, this is wrong
-			return self.p1.x == l2.p1.x
+			# the only way is if they are at the same x position exactly and the endpoints of y fall within the first line
+			return self.p1.x == l2.p1.x and (self.y_falls_within(l2.p1.y) or self.y_falls_within(l2.p2.y))
 		elif vert1 :
 			# FIXME check for onlines, more thorough testing
 			# the y coordinate where the intersection occurs
@@ -207,8 +205,13 @@ class Line(object) :
 			return l2.y_falls_within(y2) and self.x_falls_within(l2.p1.x)
 		else :
 			if a1 == a2 :
-				# slopes are equal; they only intersect if the their offsets are also equal
-				return b1 == b2
+				# slopes are equal; they only intersect if the their offsets are also equal and 
+				# the x dimensions overlap
+				if b1 != b2 :
+					return False
+
+				return self.x_falls_within(l2.p1.x) or self.x_falls_within(l2.p2.x)
+
 			# slopes are non equal.... find the x and y solutions of the set of equations
 			x = (float(b2) - b1) / (float(a1) - a2)
 			y = a2 * x + b2

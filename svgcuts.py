@@ -29,6 +29,7 @@ class Line(object) :
 	def __init__(self, p1, p2) :
 		self.p1 = p1
 		self.p2 = p2
+		self.unit = "px"
 
 
 	def __repr__(self) :
@@ -227,19 +228,18 @@ class Line(object) :
 
 	@property
 	def svg(self) :
-		return LINE % (self.p1.x, UNIT,  self.p1.y, UNIT,  self.p2.x, UNIT,  self.p2.y, UNIT)
+		return LINE % (self.p1.x, self.unit,  self.p1.y, self.unit,  self.p2.x, self.unit,  self.p2.y, self.unit)
 
 class Layer(object) :
-	def __init__(self, xw, yw, unit) :
-		global UNIT
+	def __init__(self, xw, yw) :
 		self.xw = xw
 		self.yw = yw
 		self.lines = list()
 		self.also_cut = list()
-		self.unit = unit
-		UNIT = self.unit
+		self.unit = "px"
 
 	def add_line(self, line) :
+		line.unit = self.unit
 		self.lines.append(line)
 		for cuts in self.also_cut :
 			cuts.add_line(line)
@@ -272,7 +272,7 @@ class Layer(object) :
 		return n
 
 	def render(self) :
-		return SVG_BASE % (self.xw, UNIT, self.yw, UNIT, ''.join([line.svg for line in self.lines]))
+		return SVG_BASE % (self.xw, self.unit, self.yw, self.unit, ''.join([line.svg for line in self.lines]))
 
 	def write(self, fn) :
 		fh = open(fn, 'w')

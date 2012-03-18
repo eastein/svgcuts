@@ -1,7 +1,9 @@
 import math
 
-SVG_BASE='<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.0//EN" "http://www.w3.org/TR/2001/REC-SVG-20010904/DTD/svg10.dtd"><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="%dpx" height="%dpx">%s</svg>'
-LINE="<polyline points='%f %f, %f %f' stroke-width='0.1' stroke='black' style='fill: none;' />"
+SVG_BASE='<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.0//EN" "http://www.w3.org/TR/2001/REC-SVG-20010904/DTD/svg10.dtd"><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="%d%s" height="%d%s">%s</svg>'
+#LINE="<polyline points='%f%s %f%s, %f%s %f%s' stroke-width='0.1' stroke='black' style='fill: none;' />"
+LINE="<line x1='%f%s' y1='%f%s' x2='%f%s' y2='%f%s' stroke-width='0.1' stroke='black' style='fill: none;' />"
+UNIT = "px"
 
 class Point(object) :
 	def __init__(self, x, y) :
@@ -27,6 +29,7 @@ class Line(object) :
 	def __init__(self, p1, p2) :
 		self.p1 = p1
 		self.p2 = p2
+		self.unit = "px"
 
 
 	def __repr__(self) :
@@ -225,7 +228,7 @@ class Line(object) :
 
 	@property
 	def svg(self) :
-		return LINE % (self.p1.x, self.p1.y, self.p2.x, self.p2.y)
+		return LINE % (self.p1.x, self.unit,  self.p1.y, self.unit,  self.p2.x, self.unit,  self.p2.y, self.unit)
 
 class Layer(object) :
 	def __init__(self, xw, yw) :
@@ -233,8 +236,10 @@ class Layer(object) :
 		self.yw = yw
 		self.lines = list()
 		self.also_cut = list()
+		self.unit = "px"
 
 	def add_line(self, line) :
+		line.unit = self.unit
 		self.lines.append(line)
 		for cuts in self.also_cut :
 			cuts.add_line(line)
@@ -267,7 +272,7 @@ class Layer(object) :
 		return n
 
 	def render(self) :
-		return SVG_BASE % (self.xw, self.yw, ''.join([line.svg for line in self.lines]))
+		return SVG_BASE % (self.xw, self.unit, self.yw, self.unit, ''.join([line.svg for line in self.lines]))
 
 	def write(self, fn) :
 		fh = open(fn, 'w')

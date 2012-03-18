@@ -26,11 +26,10 @@ class Point(object) :
 		return math.pow(math.pow(float(self.x) - float(p2.x), 2) + math.pow(float(self.y) - float(p2.y), 2), 0.5)
 
 class Line(object) :
-	def __init__(self, p1, p2) :
+	def __init__(self, p1, p2, unit="px") :
 		self.p1 = p1
 		self.p2 = p2
-		self.unit = "px"
-
+		self.unit = unit
 
 	def __repr__(self) :
 		return 'Line<%s,%s>' % (self.p1, self.p2)

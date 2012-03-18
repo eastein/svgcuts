@@ -230,12 +230,12 @@ class Line(object) :
 		return LINE % (self.p1.x, self.unit,  self.p1.y, self.unit,  self.p2.x, self.unit,  self.p2.y, self.unit)
 
 class Layer(object) :
-	def __init__(self, xw, yw) :
+	def __init__(self, xw, yw, unit="px") :
 		self.xw = xw
 		self.yw = yw
 		self.lines = list()
 		self.also_cut = list()
-		self.unit = "px"
+		self.unit = unit
 
 	def add_line(self, line) :
 		line.unit = self.unit

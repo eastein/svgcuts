@@ -234,6 +234,7 @@ class Layer(object) :
 		self.xw = xw
 		self.yw = yw
 		self.lines = list()
+		self.texts = list()
 		self.also_cut = list()
 		self.unit = unit
 
@@ -242,6 +243,11 @@ class Layer(object) :
 		self.lines.append(line)
 		for cuts in self.also_cut :
 			cuts.add_line(line)
+
+	def add_text(self, x, y, text) :
+		self.texts.append((x,y,text))
+		for cuts in self.also_cut :
+			cuts.add_text(x, y, text)
 
 	def assert_n_intersections(self, maxn=None) :
 		n = 0
@@ -271,7 +277,7 @@ class Layer(object) :
 		return n
 
 	def render(self) :
-		return SVG_BASE % (self.xw, self.unit, self.yw, self.unit, ''.join([line.svg for line in self.lines]))
+		return SVG_BASE % (self.xw, self.unit, self.yw, self.unit, ''.join([line.svg for line in self.lines] + ['<text x="%f%s" y="%f%s" font-family="Helvetica" font-size="10pt" fill="black">%s</text>' % (x, self.unit, y, self.unit, text) for (x, y, text) in self.texts]))
 
 	def write(self, fn) :
 		fh = open(fn, 'w')

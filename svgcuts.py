@@ -2,7 +2,7 @@ import math
 
 SVG_BASE='<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.0//EN" "http://www.w3.org/TR/2001/REC-SVG-20010904/DTD/svg10.dtd"><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="%d%s" height="%d%s">%s</svg>'
 #LINE="<polyline points='%f%s %f%s, %f%s %f%s' stroke-width='0.1' stroke='black' style='fill: none;' />"
-LINE="<line x1='%f%s' y1='%f%s' x2='%f%s' y2='%f%s' stroke-width='0.1' stroke='black' style='fill: none;' />"
+LINE="<line x1='%f%s' y1='%f%s' x2='%f%s' y2='%f%s' stroke-width='1' stroke='%s' style='fill: none;' />"
 UNIT = "px"
 
 class Point(object) :
@@ -26,11 +26,12 @@ class Point(object) :
 		return math.pow(math.pow(float(self.x) - float(p2.x), 2) + math.pow(float(self.y) - float(p2.y), 2), 0.5)
 
 class Line(object) :
-	def __init__(self, p1, p2, unit="px") :
+	def __init__(self, p1, p2, unit="px", color="black") :
 		self.p1 = p1
 		self.p2 = p2
 		self.unit = unit
-
+		self.color = color
+	
 	def __repr__(self) :
 		return 'Line<%s,%s>' % (self.p1, self.p2)
 
@@ -227,7 +228,7 @@ class Line(object) :
 
 	@property
 	def svg(self) :
-		return LINE % (self.p1.x, self.unit,  self.p1.y, self.unit,  self.p2.x, self.unit,  self.p2.y, self.unit)
+		return LINE % (self.p1.x, self.unit,  self.p1.y, self.unit,  self.p2.x, self.unit,  self.p2.y, self.unit, self.color)
 
 class Layer(object) :
 	def __init__(self, xw, yw, unit="px") :

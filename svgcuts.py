@@ -1,6 +1,6 @@
 import math
 
-SVG_BASE='<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.0//EN" "http://www.w3.org/TR/2001/REC-SVG-20010904/DTD/svg10.dtd"><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="%d%s" height="%d%s">%s</svg>'
+SVG_BASE='<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.0//EN" "http://www.w3.org/TR/2001/REC-SVG-20010904/DTD/svg10.dtd"><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="%f%s" height="%f%s">%s</svg>'
 #LINE="<polyline points='%f%s %f%s, %f%s %f%s' stroke-width='0.1' stroke='black' style='fill: none;' />"
 LINE="<line x1='%f%s' y1='%f%s' x2='%f%s' y2='%f%s' stroke-width='1' stroke='%s' style='fill: none;' />"
 UNIT = "px"
@@ -25,8 +25,16 @@ class Point(object) :
 	def distance(self, p2) :
 		return math.pow(math.pow(float(self.x) - float(p2.x), 2) + math.pow(float(self.y) - float(p2.y), 2), 0.5)
 
+	def translate(self, x, y) :
+		self.x += x
+		self.y += y
+
+	def scale(self, xm, ym) :
+		self.x *= xm
+		self.y *= ym
+
 class Line(object) :
-	def __init__(self, p1, p2, unit="px", color="black") :
+	def __init__(self, p1, p2, unit='px', color="black") :
 		self.p1 = p1
 		self.p2 = p2
 		self.unit = unit
@@ -236,6 +244,7 @@ class Layer(object) :
 		self.yw = yw
 		self.lines = list()
 		self.texts = list()
+		self.circles = list()
 		self.also_cut = list()
 		self.unit = unit
 
@@ -249,6 +258,11 @@ class Layer(object) :
 		self.texts.append((x,y,text))
 		for cuts in self.also_cut :
 			cuts.add_text(x, y, text)
+
+	def add_circle(self, x, y, radius) :
+		self.circles.append((x,y,radius))
+		for cuts in self.also_cut :
+			cuts.add_circle(x, y, radius)
 
 	def assert_n_intersections(self, maxn=None) :
 		n = 0
@@ -278,7 +292,10 @@ class Layer(object) :
 		return n
 
 	def render(self) :
-		return SVG_BASE % (self.xw, self.unit, self.yw, self.unit, ''.join([line.svg for line in self.lines] + ['<text x="%f%s" y="%f%s" font-family="Helvetica" font-size="10pt" fill="black">%s</text>' % (x, self.unit, y, self.unit, text) for (x, y, text) in self.texts]))
+		return SVG_BASE % (self.xw, self.unit, self.yw, self.unit, ''.join(\
+			[line.svg for line in self.lines] + \
+			['<text x="%f%s" y="%f%s" font-family="Helvetica" font-size="10pt" fill="black">%s</text>' % (x, self.unit, y, self.unit, text) for (x, y, text) in self.texts] + \
+			['<circle cx="%f%s" cy="%f%s" r="%f%s" stroke="black" stroke-width="1" fill="none"/>' % (x, self.unit, y, self.unit, r, self.unit) for (x, y, r) in self.circles]))
 
 	def write(self, fn) :
 		fh = open(fn, 'w')

@@ -203,3 +203,15 @@ class LineTests(unittest.TestCase) :
 		l1 = svgcuts.Line(svgcuts.Point(0,1), svgcuts.Point(1,2))
 		l2 = svgcuts.Line(svgcuts.Point(1,4), svgcuts.Point(3,2))
 		self.assertAlmostEqual(l2.closest_distance(l1), math.sqrt(2))
+
+	def test_basic_render(self) :
+		l = svgcuts.Layer(4, 6, unit='in')
+		l.add_line(svgcuts.Line(svgcuts.Point(1,1), svgcuts.Point(2,2)))
+		svg = l.render()
+		#print svg
+		self.assertTrue('height="6.000000in"' in svg)
+		for d in ['x', 'y'] :
+			for n in [1,2] :
+				self.assertTrue('%s%d=\'%d.00' % (d, n, n) in svg)
+		self.assertTrue('<line' in svg)
+		 

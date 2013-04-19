@@ -254,10 +254,10 @@ class Layer(object) :
 		for cuts in self.also_cut :
 			cuts.add_line(line)
 
-	def add_text(self, x, y, text) :
-		self.texts.append((x,y,text))
+	def add_text(self, x, y, text, fontfam='Helvetica', fontsize=10) :
+		self.texts.append((x,y,text,fontfam,fontsize))
 		for cuts in self.also_cut :
-			cuts.add_text(x, y, text)
+			cuts.add_text(x, y, text, fontfam=fontfam, fontsize=fontsize)
 
 	def add_circle(self, x, y, radius) :
 		self.circles.append((x,y,radius))
@@ -294,7 +294,7 @@ class Layer(object) :
 	def render(self) :
 		return SVG_BASE % (self.xw, self.unit, self.yw, self.unit, ''.join(\
 			[line.svg for line in self.lines] + \
-			['<text x="%f%s" y="%f%s" font-family="Helvetica" font-size="10pt" fill="black">%s</text>' % (x, self.unit, y, self.unit, text) for (x, y, text) in self.texts] + \
+			['<text x="%f%s" y="%f%s" font-family="%s" font-size="%dpt" fill="black">%s</text>' % (x, self.unit, y, self.unit, fontfam, fontsize, text) for (x, y, text, fontfam, fontsize) in self.texts] + \
 			['<circle cx="%f%s" cy="%f%s" r="%f%s" stroke="black" stroke-width="1" fill="none"/>' % (x, self.unit, y, self.unit, r, self.unit) for (x, y, r) in self.circles]))
 
 	def write(self, fn) :

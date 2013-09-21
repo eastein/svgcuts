@@ -330,11 +330,11 @@ class Layer(object) :
 				pass
 
 			# how far apart things have to be
-			PAD = .04
+			PAD = .025
 			# how much area a note during guillotine can get before it's not suballocated
 			# if the piece that just got placed is smaller than this, the area (with padding)
 			# of the piece that just got placed is treated as the toss area
-			TOSS_A = 0.0225
+			TOSS_A = 0.0125
 			def __init__(self, on_layer, xpos, ypos, xsz, ysz) :
 				self.on_layer = on_layer
 				self.xpos = xpos

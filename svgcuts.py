@@ -301,7 +301,7 @@ class Layer(object) :
 	#### knapsack ####
 
 	def copy_from(self, l, xtr, ytr) :
-		print 'copying with translates', xtr, ytr
+		#print 'copying with translates', xtr, ytr
 		lines = copy.deepcopy(l.lines)
 		for l in lines :
 			# XXX figure out why i'm having to divide this by 2, WORKAROUND LOL
@@ -342,9 +342,9 @@ class Layer(object) :
 				self.xsz = xsz
 				self.ysz = ysz
 
-				print 'creating new node at %f %f' % (self.xpos, self.ypos)
+				#print 'creating new node at %f %f' % (self.xpos, self.ypos)
 
-				DEBUG = True
+				DEBUG = False
 
 				if DEBUG :
 					unit = on_layer.unit
@@ -409,14 +409,15 @@ class Layer(object) :
 						p.append((a, cut, xp, yp, xs, ys))
 
 					if cut == CUT.H :
-						print ypad
+						#print ypad
 						add_option(p, cut, xpad, 0.0, xspare, ypad)
 						add_option(p, cut, 0.0, ypad, self.xsz, yspare)
 					elif cut == CUT.V :
 						add_option(p, cut, 0.0, ypad, xpad, yspare)
 						add_option(p, cut, xpad, 0.0, xspare, self.ysz)
 
-					possibles[cut] = list(p)
+					if p :
+						possibles[cut] = list(p)
 
 				max_spares = None
 				max_saved = None
@@ -429,15 +430,15 @@ class Layer(object) :
 						max_spares = spares
 						max_saved = ta
 
-				print 'spare subsegments are %s' % max_spares
-				print 'copying in'
+				#print 'spare subsegments are %s' % max_spares
+				#print 'copying in'
 				r = []
 				self.on_layer.copy_from(layer, self.xpos + self.PAD, self.ypos + self.PAD)
 				if max_spares :
-					print 'did cut: %s' % str(max_spares[0][1])
+					#print 'did cut: %s' % str(max_spares[0][1])
 
 					for (a, cut, xp, yp, xs, ys) in max_spares :
-						print xp, yp, xs, ys
+						#print xp, yp, xs, ys
 						r.append(self.sub(xp, yp, xs, ys))
 				return r
 
@@ -455,7 +456,11 @@ class Layer(object) :
 			progress = False
 
 			while progress is False :
-				use_node = avail_nodes.pop()
+				try :
+					use_node = avail_nodes.pop()
+				except IndexError :
+					# nope, nowhere to put it!
+					break
 
 				for try_thistime in per :
 					if try_thistime is None :

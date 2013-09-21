@@ -448,7 +448,7 @@ class Layer(object) :
 
 		unplaced = list(layers)
 		
-		per = [20, 30, 100, 1000, None]
+		per = [25, 80, 200, 400, None]
 		progress = True
 		while unplaced and progress and avail_nodes :
 			# try putting them in a random order!
@@ -471,7 +471,8 @@ class Layer(object) :
 					best_fr = None
 					best_layer = None
 
-					random.shuffle(unplaced)
+					# maybe don't shuffle? TODO - heuristics
+					#random.shuffle(unplaced)
 
 					for i in range(try_thistime) :
 						trying = unplaced[i]

@@ -1,9 +1,16 @@
+import random
+import copy
 import math
 
 SVG_BASE='<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.0//EN" "http://www.w3.org/TR/2001/REC-SVG-20010904/DTD/svg10.dtd"><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="%f%s" height="%f%s">%s</svg>'
 #LINE="<polyline points='%f%s %f%s, %f%s %f%s' stroke-width='0.1' stroke='black' style='fill: none;' />"
 LINE="<line x1='%f%s' y1='%f%s' x2='%f%s' y2='%f%s' stroke-width='1' stroke='%s' style='fill: none;' />"
 UNIT = "px"
+
+class Transformable(object) :
+	"""
+	"""
+	pass
 
 class Point(object) :
 	def __init__(self, x, y) :
@@ -290,6 +297,195 @@ class Layer(object) :
 					if maxn is not None and n > maxn :
 						return False
 		return n
+
+	#### knapsack ####
+
+	def copy_from(self, l, xtr, ytr) :
+		print 'copying with translates', xtr, ytr
+		lines = copy.deepcopy(l.lines)
+		for l in lines :
+			# XXX figure out why i'm having to divide this by 2, WORKAROUND LOL
+			l.p1.x += xtr / 2.0
+			l.p2.x += xtr / 2.0
+			l.p1.y += ytr / 2.0
+			l.p2.y += ytr / 2.0
+			self.add_line(l)
+
+	def pack(self, layers) :
+		"""
+		@param layers List of tuples. Each tuple is (layer, count) for how many should be included.
+
+		This function packs the objects into the layer, if possible. Rectangular bounding boxes are used.
+
+		This should be done mostly optimally. If we're packing something in, it should to be done as efficiently as possible. If a space available matches very closely to the size of a layer to be packed, then do that.
+		"""
+		class AvailNode(object) :
+			def __cmp__(self, oan) :
+				return cmp(self.area(), oan.area())
+
+			def area(self) :
+				return self.xsz * self.ysz
+
+			class NoFit(Exception) :
+				pass
+
+			# how far apart things have to be
+			PAD = .04
+			# how much area a note during guillotine can get before it's not suballocated
+			# if the piece that just got placed is smaller than this, the area (with padding)
+			# of the piece that just got placed is treated as the toss area
+			TOSS_A = 0.0225
+			def __init__(self, on_layer, xpos, ypos, xsz, ysz) :
+				self.on_layer = on_layer
+				self.xpos = xpos
+				self.ypos = ypos
+				self.xsz = xsz
+				self.ysz = ysz
+
+				print 'creating new node at %f %f' % (self.xpos, self.ypos)
+
+				DEBUG = True
+
+				if DEBUG :
+					unit = on_layer.unit
+					in_pad = .01
+					pts = [
+						Point(self.xpos + in_pad, self.ypos + in_pad),
+						Point(self.xpos + self.xsz - in_pad, self.ypos + in_pad),
+						Point(self.xpos + self.xsz - in_pad, self.ypos + self.ysz - in_pad),
+						Point(self.xpos + in_pad, self.ypos + self.ysz - in_pad),
+					]
+					for i in range(len(pts)) :
+						p1 = pts[i]
+						p2 = pts[(i + 1) % len(pts)]
+						on_layer.add_line(Line(p1, p2, unit=unit))
+			
+			def sub(self, xpos, ypos, xsz, ysz) :
+				return self.__class__(self.on_layer, self.xpos + xpos, self.ypos + ypos, xsz, ysz)
+
+			"""
+			Return optimality of the fit, what ratio of the padded area of the piece will be used if
+			placed here. We want to totally fill up the subsections if possible.
+			this will optimize for placing large things first and using small areas first.
+			"""
+			def fit(self, layer) :
+				xpad = (layer.xw + self.PAD * 2)
+				ypad = (layer.yw + self.PAD * 2)
+				apad = xpad * ypad
+
+				this_area = self.xsz  * self.ysz
+				if xpad > self.xsz :
+					raise self.NoFit
+				elif ypad > self.ysz :
+					raise self.NoFit
+				
+				return apad / this_area
+
+			def place(self, layer) :
+				class CUT :
+					class V :
+						pass
+					class H :
+						pass
+				CUT_OPTS = [CUT.V, CUT.H]
+
+				# TODO make deciding to cut vertically or horizontally smarter than this
+				xpad = (layer.xw + self.PAD * 2)
+				ypad = (layer.yw + self.PAD * 2)
+				apad = xpad * ypad
+
+				atoss = min(apad, self.TOSS_A)
+
+				xspare = self.xsz - xpad
+				yspare = self.ysz - ypad
+
+				possibles = dict()
+				for cut in CUT_OPTS :
+					p = []
+					def add_option(p, cut, xp, yp, xs, ys) :
+						a = xs * ys
+						if a < atoss :
+							return
+						p.append((a, cut, xp, yp, xs, ys))
+
+					if cut == CUT.H :
+						print ypad
+						add_option(p, cut, xpad, 0.0, xspare, ypad)
+						add_option(p, cut, 0.0, ypad, self.xsz, yspare)
+					elif cut == CUT.V :
+						add_option(p, cut, 0.0, ypad, xpad, yspare)
+						add_option(p, cut, xpad, 0.0, xspare, self.ysz)
+
+					possibles[cut] = list(p)
+
+				max_spares = None
+				max_saved = None
+				for (ct, spares) in possibles.items() :
+					ta = reduce(lambda a,b: a+b, [a for (a, cut, xp, yp, xs, ys) in spares])
+					if max_saved is None :
+						max_spares = spares
+						max_saved = ta
+					elif ta > max_saved :
+						max_spares = spares
+						max_saved = ta
+
+				print 'spare subsegments are %s' % max_spares
+				print 'copying in'
+				r = []
+				self.on_layer.copy_from(layer, self.xpos + self.PAD, self.ypos + self.PAD)
+				if max_spares :
+					print 'did cut: %s' % str(max_spares[0][1])
+
+					for (a, cut, xp, yp, xs, ys) in max_spares :
+						print xp, yp, xs, ys
+						r.append(self.sub(xp, yp, xs, ys))
+				return r
+
+		avail_nodes = [
+			AvailNode(self, 0.0, 0.0, self.xw, self.yw)
+		]
+
+		unplaced = list(layers)
+		
+		per = [20, 30, 100, 1000, None]
+		progress = True
+		while unplaced and progress and avail_nodes :
+			# try putting them in a random order!
+			avail_nodes.sort(reverse=True)
+			progress = False
+
+			while progress is False :
+				use_node = avail_nodes.pop()
+
+				for try_thistime in per :
+					if try_thistime is None :
+						# try them all, oh well
+						try_thistime = len(unplaced)
+					else :
+						try_thistime = min(try_thistime, len(unplaced))
+					best_fr = None
+					best_layer = None
+
+					random.shuffle(unplaced)
+
+					for i in range(try_thistime) :
+						trying = unplaced[i]
+						try :
+							fr = use_node.fit(trying)
+							#print 'fr is %f' % fr
+							if (best_fr is None) or (fr > best_fr) :
+								best_fr = fr
+								best_layer = trying
+						except AvailNode.NoFit :
+							continue
+
+					if best_layer :
+						unplaced.remove(best_layer)
+						avail_nodes += use_node.place(best_layer)
+						progress = True
+						break
+		return unplaced
+	#### conversion to svg ####
 
 	def render(self) :
 		return SVG_BASE % (self.xw, self.unit, self.yw, self.unit, ''.join(\

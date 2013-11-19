@@ -196,7 +196,10 @@ class Line(object) :
 		n = len(self_points.intersection(l2_points))
 		return n
 	
-	def intersects(self, l2, onlines=2) :
+	"""
+	If return_intersection_point is set to true, then the point of intersection should be returned if available.
+	"""
+	def intersects(self, l2, onlines=2, return_intersection_point=False) :
 		vert1 = False
 		vert2 = False
 		try :
@@ -239,7 +242,11 @@ class Line(object) :
 				onlines_counted += 1
 			if l2.x_falls_within(x) and l2.y_falls_within(y) :
 				onlines_counted += 1
-			return onlines_counted >= onlines
+
+			r = onlines_counted >= onlines
+			if r and return_intersection_point :
+				return Point(x, y)
+			return r
 
 	@property
 	def svg(self) :

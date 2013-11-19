@@ -2,9 +2,9 @@ import random
 import copy
 import math
 
-SVG_BASE='<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.0//EN" "http://www.w3.org/TR/2001/REC-SVG-20010904/DTD/svg10.dtd"><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="%f%s" height="%f%s">%s</svg>'
+SVG_BASE='<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.0//EN" "http://www.w3.org/TR/2001/REC-SVG-20010904/DTD/svg10.dtd"><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="%f%s" height="%f%s">\n%s</svg>'
 #LINE="<polyline points='%f%s %f%s, %f%s %f%s' stroke-width='0.1' stroke='black' style='fill: none;' />"
-LINE="<line x1='%f%s' y1='%f%s' x2='%f%s' y2='%f%s' stroke-width='1' stroke='%s' style='fill: none;' />"
+LINE="<line x1='%f%s' y1='%f%s' x2='%f%s' y2='%f%s' stroke-width='1' stroke='%s' style='fill: none;' />\n"
 UNIT = "px"
 
 class Transformable(object) :
@@ -198,8 +198,10 @@ class Line(object) :
 	
 	"""
 	If return_intersection_point is set to true, then the point of intersection should be returned if available.
+	If the lines are the same, no singular intersection point will be found and True will be returned.
 	"""
 	def intersects(self, l2, onlines=2, return_intersection_point=False) :
+		#print 'testing intersection of %s, %s' % (str(self), str(l2))
 		vert1 = False
 		vert2 = False
 		try :
@@ -268,6 +270,16 @@ class Layer(object) :
 		self.also_cut = list()
 		self.unit = unit
 
+	"""
+	Duplicates the layer. Frees copy from the web of also_cut relations.
+	"""
+	def duplicate(self) :
+		d = self.__class__(self.xw, self.yw, unit=self.unit)
+		d.lines = copy.deepcopy(self.lines)
+		d.texts = copy.deepcopy(self.texts)
+		d.circles = copy.deepcopy(self.circles)
+		return d
+
 	def add_line(self, line) :
 		line.unit = self.unit
 		self.lines.append(line)
@@ -311,9 +323,8 @@ class Layer(object) :
 						return False
 		return n
 
-	#### knapsack ####
-
 	def copy_from(self, l, xtr, ytr) :
+		# TODO make this work with things that aren't lines
 		#print 'copying with translates', xtr, ytr
 		lines = copy.deepcopy(l.lines)
 		for l in lines :
@@ -323,6 +334,50 @@ class Layer(object) :
 			l.p1.y += ytr / 2.0
 			l.p2.y += ytr / 2.0
 			self.add_line(l)
+
+	"""
+	A new layer is created. It  contains the same elements, but with all line segments it contains cut
+	into two wherever they intersect with the set of lines given in slicer_lines. If not specified,
+	then slicer_lines is the same as the set of lines present in the layer itself.
+	"""
+	def slice_lines(self, slicer_lines=None) :
+		if slicer_lines is None :
+			slicer_lines = self.lines
+
+
+		# TODO apply heuristics such as sort? Don't bother until it at least works, though.
+
+		# TODO preserve meta-data like interpolation for 3d projections? Is that even valid with perspective? Thinking no.. Those equations get complex...
+
+		new_layer = self.duplicate()
+		new_layer.lines = list()
+
+		# O(n^2) - not great.  use quad tree perhaps?
+		slice_workset = copy.deepcopy(self.lines)
+		for slicer_line in slicer_lines :
+			output = list()
+			for line in slice_workset :
+				intersection = line.intersects(slicer_line, return_intersection_point=True)
+				if isinstance(intersection, Point) :
+					print 'snipping line %s' % str(line)
+					print 'inter:', intersection
+					# The vorpal blade went snicker-snack!
+					p1 = line.p1
+					p2 = intersection
+					p3 = line.p2
+
+					output.append(Line(p1, p2, unit=line.unit))
+					output.append(Line(p2, p3, unit=line.unit))
+				else :
+					output.append(line)
+
+			slice_workset = output
+
+		new_layer.lines = slice_workset
+
+		return new_layer
+
+	#### knapsack ####
 
 	def pack(self, layers) :
 		"""
@@ -509,8 +564,8 @@ class Layer(object) :
 	def render(self) :
 		return SVG_BASE % (self.xw, self.unit, self.yw, self.unit, ''.join(\
 			[line.svg for line in self.lines] + \
-			['<text x="%f%s" y="%f%s" font-family="%s" font-size="%dpt" fill="black">%s</text>' % (x, self.unit, y, self.unit, fontfam, fontsize, text) for (x, y, text, fontfam, fontsize) in self.texts] + \
-			['<circle cx="%f%s" cy="%f%s" r="%f%s" stroke="black" stroke-width="1" fill="none"/>' % (x, self.unit, y, self.unit, r, self.unit) for (x, y, r) in self.circles]))
+			['<text x="%f%s" y="%f%s" font-family="%s" font-size="%dpt" fill="black">%s</text>\n' % (x, self.unit, y, self.unit, fontfam, fontsize, text) for (x, y, text, fontfam, fontsize) in self.texts] + \
+			['<circle cx="%f%s" cy="%f%s" r="%f%s" stroke="black" stroke-width="1" fill="none"/>\n' % (x, self.unit, y, self.unit, r, self.unit) for (x, y, r) in self.circles]))
 
 	def write(self, fn) :
 		fh = open(fn, 'w')

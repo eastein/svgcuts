@@ -164,6 +164,26 @@ class LineTests(unittest.TestCase) :
 			self.assertAlmostEqual(pinter.x, 1.0)
 			self.assertAlmostEqual(pinter.y, 1.0)
 
+	def test_slices_layer(self) :
+		p1 = svgcuts.Point(0,0)
+		p2 = svgcuts.Point(3,3)
+		p3 = svgcuts.Point(1,0)
+		p4 = svgcuts.Point(1,3)
+		l1 = svgcuts.Line(p1, p2)
+		l2 = svgcuts.Line(p3, p4)
+
+		layer = svgcuts.Layer(3, 3, unit='in')
+		layer.add_line(l1)
+		layer.add_line(l2)
+
+		self.assertEquals(len(layer.lines), 2)
+
+		new_layer = layer.slice_lines()
+
+		self.assertEquals(len(new_layer.lines), 4)
+
+		# TODO verify that the line sliced right
+
 	def test_slope_offset(self) :
 		s,i = svgcuts.Line(svgcuts.Point(1,1), svgcuts.Point(2,3)).slope_offset
 		self.assertAlmostEqual(s, 2.0)

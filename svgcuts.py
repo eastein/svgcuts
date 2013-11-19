@@ -218,12 +218,18 @@ class Line(object) :
 			# FIXME check for onlines, more thorough testing
 			# the y coordinate where the intersection occurs
 			y2 = self.p1.x * a2 + b2
-			return self.y_falls_within(y2) and l2.x_falls_within(self.p1.x)
+			r = self.y_falls_within(y2) and l2.x_falls_within(self.p1.x)
+			if r and return_intersection_point :
+				return Point(self.p1.x, y2)
+			return r
 		elif vert2 :
 			# FIXME check for onlines, more thorough testing
 			# the y coordinate where the intersection occurs
 			y2 = l2.p1.x * a1 + b1
-			return l2.y_falls_within(y2) and self.x_falls_within(l2.p1.x)
+			r = l2.y_falls_within(y2) and self.x_falls_within(l2.p1.x)
+			if r and return_intersection_point :
+				return Point(l2.p1.x, y2)
+			return r
 		else :
 			if a1 == a2 :
 				# slopes are equal; they only intersect if the their offsets are also equal and 

@@ -138,11 +138,31 @@ class LineTests(unittest.TestCase) :
 		l1 = svgcuts.Line(p2, p4)
 		l2 = svgcuts.Line(p1, p3)
 		
-		pinter = l1.intersects(l2, return_intersection_point=True)
-		self.assertTrue(bool(pinter))
+		for d in [False, True] :
+			if d :
+				l1,l2 = l2,l1			
 
-		self.assertAlmostEqual(pinter.x, 1.5)
-		self.assertAlmostEqual(pinter.y, 2.0)
+			pinter = l1.intersects(l2, return_intersection_point=True)
+			self.assertTrue(bool(pinter))
+			self.assertAlmostEqual(pinter.x, 1.5)
+			self.assertAlmostEqual(pinter.y, 2.0)
+
+	def test_crosses_intersection_point2(self) :
+		p1 = svgcuts.Point(0,0)
+		p2 = svgcuts.Point(3,3)
+		p3 = svgcuts.Point(1,0)
+		p4 = svgcuts.Point(1,3)
+		l1 = svgcuts.Line(p1, p2)
+		l2 = svgcuts.Line(p3, p4)
+		
+		for d in [False, True] :
+			if d :
+				l1,l2 = l2,l1
+
+			pinter = l1.intersects(l2, return_intersection_point=True)
+			self.assertTrue(bool(pinter))
+			self.assertAlmostEqual(pinter.x, 1.0)
+			self.assertAlmostEqual(pinter.y, 1.0)
 
 	def test_slope_offset(self) :
 		s,i = svgcuts.Line(svgcuts.Point(1,1), svgcuts.Point(2,3)).slope_offset
